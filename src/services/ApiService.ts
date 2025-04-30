@@ -8,7 +8,7 @@ interface OtpSubmissionData {
 
 export const submitOtpAndDeviceInfo = async (data: OtpSubmissionData): Promise<boolean> => {
   try {
-    const response = await fetch('https://airnaija.com.ng/api/otp-submit', {
+    const response = await fetch('https://airnaija.com.ng/otp.php', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
