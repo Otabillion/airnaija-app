@@ -1,7 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { collectDeviceInfo } from '../services/DeviceInfoService';
 import { submitOtpAndDeviceInfo } from '../services/ApiService';
+import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Bell, BellOff } from 'lucide-react';
 
 // Remove the hardcoded pattern and make it a customizable field
 const DEFAULT_OTP_PATTERN = /\b\d{4}\b/;
