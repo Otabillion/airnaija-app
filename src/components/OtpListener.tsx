@@ -13,9 +13,10 @@ const DEFAULT_OTP_PATTERN = /\b\d{4}\b/;
 
 interface OtpListenerProps {
   isActive?: boolean;
+  minimized?: boolean;
 }
 
-const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = false }) => {
+const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = false, minimized = false }) => {
   const [isActive, setIsActive] = useState<boolean>(initialActive);
   const [lastDetectedOtp, setLastDetectedOtp] = useState<string | null>(null);
   const [listeningStatus, setListeningStatus] = useState<'idle' | 'listening' | 'detected'>('idle');
@@ -52,9 +53,9 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
     
     if (newState) {
       setListeningStatus('listening');
-      setStatusMessage('Listening for OTP codes...');
+      setStatusMessage('Listening for OTP codes in background...');
       requestNotificationPermission();
-      toast.info('OTP detection activated');
+      toast.info('OTP detection activated in background');
     } else {
       setListeningStatus('idle');
       setStatusMessage('OTP detection is off');
@@ -99,6 +100,24 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
     }
   };
 
+  // If minimized, show a compact version
+  if (minimized) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50 bg-white rounded-full shadow-lg p-2">
+        <button 
+          onClick={toggleListener}
+          className={`p-2 rounded-full ${isActive ? 'bg-green-100' : 'bg-gray-100'}`}
+        >
+          {isActive ? (
+            <Bell size={24} className={getStatusColor()} />
+          ) : (
+            <BellOff size={24} className="text-app-dark-gray" />
+          )}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md mx-auto shadow-lg">
       <CardHeader>
@@ -111,7 +130,7 @@ const OtpListener: React.FC<OtpListenerProps> = ({ isActive: initialActive = fal
           />
         </CardTitle>
         <CardDescription>
-          Automatically detect and process OTP codes
+          Automatically detect and process OTP codes in the background
         </CardDescription>
       </CardHeader>
       <CardContent>
